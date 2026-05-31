@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_logo.dart';
+import '../../../core/widgets/fade_slide_in.dart';
 
-/// Branded placeholder home — the Session 1 "hello-world".
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -12,52 +15,143 @@ class HomeScreen extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl, AppSpacing.xl, AppSpacing.xl, AppSpacing.xxxl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Spacer(),
-              Text(
-                'SnapOut',
-                style: t.displayMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
-                  letterSpacing: -1.5,
+              // Brand row.
+              FadeSlideIn(
+                child: Row(
+                  children: [
+                    const SnapMark(size: 36),
+                    const SizedBox(width: AppSpacing.md),
+                    const Wordmark(fontSize: 26),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text('Free', style: t.bodyMedium?.copyWith(fontSize: 12)),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                "Your phone's bouncer.",
-                style: t.titleMedium?.copyWith(color: AppColors.textMuted),
+              const SizedBox(height: AppSpacing.xxl),
+
+              // Status hero.
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 80),
+                child: _StatusHero(textTheme: t),
               ),
-              const Spacer(),
-              FilledButton(
-                onPressed: () => context.push('/onboarding'),
-                child: const Text('Start onboarding'),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Today peek.
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 160),
+                child: Row(
+                  children: [
+                    Expanded(child: _MiniStat(label: 'Skipped today', value: '0', accent: true)),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: _MiniStat(label: 'Opened today', value: '0')),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => context.push('/stats'),
-                      child: const Text('Stats'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => context.push('/settings'),
-                      child: const Text('Settings'),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: AppSpacing.xl),
+
+              // Primary CTA.
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 240),
+                child: PrimaryButton(
+                  label: 'Add an app to protect',
+                  icon: Icons.add_rounded,
+                  onPressed: () => context.push('/onboarding'),
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 300),
+                child: GhostButton(
+                  label: 'Preview the breathing exercise',
+                  icon: Icons.air_rounded,
+                  onPressed: () => context.push('/breathing'),
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StatusHero extends StatelessWidget {
+  const _StatusHero({required this.textTheme});
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SnapMark(size: 56),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Guarding 0 apps', style: textTheme.headlineSmall),
+                    const SizedBox(height: 4),
+                    Text('Not protecting anything yet',
+                        style: textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const Divider(),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            "Pick an app you doomscroll. SnapOut makes you take 3 breaths before it opens — so you choose, not the habit.",
+            style: textTheme.bodyLarge,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({required this.label, required this.value, this.accent = false});
+  final String label;
+  final String value;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value,
+              style: t.displayMedium?.copyWith(
+                fontSize: 40,
+                color: accent ? AppColors.accent : AppColors.textPrimary,
+              )),
+          const SizedBox(height: 2),
+          Text(label, style: t.bodyMedium?.copyWith(fontSize: 13)),
+        ],
       ),
     );
   }

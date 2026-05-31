@@ -46,3 +46,6 @@ app.*.map.json
 
 # local verification screenshot
 snapout_session1.png
+
+# local verification screenshots
+/shots/
