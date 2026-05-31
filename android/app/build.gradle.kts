@@ -6,10 +6,14 @@ plugins {
 
 android {
     namespace = "com.snapout.snapout"
-    compileSdk = 35
+    // Several plugins (flutter_local_notifications, in_app_purchase, share_plus)
+    // require compiling against SDK 36. compileSdk is independent of targetSdk.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Required by flutter_local_notifications (uses java.time on older APIs).
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -42,4 +46,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

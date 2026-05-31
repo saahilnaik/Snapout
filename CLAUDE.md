@@ -35,7 +35,9 @@ service, overlay, onboarding logic, stats, and IAP are NOT built yet.
   rotation, dismiss only via buttons.
 
 ## Build / Run
-- Android only for now. `minSdk 26`, `targetSdk 35`, `compileSdk 35`
-  (`android/app/build.gradle.kts`).
+- Android only for now. `minSdk 26`, `targetSdk 35`, `compileSdk 36`
+  (`android/app/build.gradle.kts`). compileSdk is 36 because several plugins
+  (flutter_local_notifications, in_app_purchase, share_plus) require it; core
+  library desugaring is enabled for flutter_local_notifications.
 - Project lives at `C:\dev\snapout` (NO spaces in path — Android Gradle breaks on spaces).
 - Flutter SDK at `C:\dev\flutter`. Run: `flutter run` with a connected device.
