@@ -49,9 +49,11 @@ class _SnapOutAppState extends ConsumerState<SnapOutApp> {
   }
 
   void _go(String route) {
-    if (appRouter.routerDelegate.currentConfiguration.uri.toString() != route) {
-      appRouter.push(route);
-    }
+    // Don't stack a second breathing screen if one is already showing (repeated
+    // triggers each carry a different ?pkg=, so compare path only).
+    final current = appRouter.routerDelegate.currentConfiguration.uri.path;
+    final target = Uri.parse(route).path;
+    if (current != target) appRouter.push(route);
   }
 
   @override

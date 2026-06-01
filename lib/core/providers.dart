@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'services/detection_service.dart';
 import 'services/entitlement_store.dart';
+import 'services/notification_service.dart';
 import 'services/protected_apps_store.dart';
 import 'services/purchase_service.dart';
 import 'services/stats_store.dart';
@@ -132,6 +134,66 @@ class AccentController extends Notifier<String> {
 }
 
 final accentProvider = NotifierProvider<AccentController, String>(AccentController.new);
+
+// --- Reminders ---
+
+final notificationServiceProvider = Provider<NotificationService>((ref) => NotificationService());
+
+class ReminderState {
+  const ReminderState({required this.enabled, required this.hour, required this.minute});
+
+  final bool enabled;
+  final int hour;
+  final int minute;
+
+  /// 12-hour label, e.g. "8:00 PM".
+  String get label {
+    final h12 = hour % 12 == 0 ? 12 : hour % 12;
+    final ampm = hour < 12 ? 'AM' : 'PM';
+    return '$h12:${minute.toString().padLeft(2, '0')} $ampm';
+  }
+}
+
+class ReminderController extends Notifier<ReminderState> {
+  Box? get _box => Hive.isBoxOpen('snapout') ? Hive.box('snapout') : null;
+
+  @override
+  ReminderState build() => ReminderState(
+        enabled: (_box?.get('reminder_enabled', defaultValue: false) as bool?) ?? false,
+        hour: (_box?.get('reminder_hour', defaultValue: 20) as int?) ?? 20,
+        minute: (_box?.get('reminder_minute', defaultValue: 0) as int?) ?? 0,
+      );
+
+  Future<bool> setEnabled(bool value) async {
+    final svc = ref.read(notificationServiceProvider);
+    var enabled = value;
+    if (value) {
+      final granted = await svc.requestPermission();
+      if (!granted) {
+        enabled = false; // permission denied — keep it off
+      } else {
+        await svc.scheduleDaily(state.hour, state.minute);
+      }
+    } else {
+      await svc.cancelDaily();
+    }
+    await _box?.put('reminder_enabled', enabled);
+    state = ReminderState(enabled: enabled, hour: state.hour, minute: state.minute);
+    return enabled;
+  }
+
+  Future<void> setTime(int hour, int minute) async {
+    await _box?.put('reminder_hour', hour);
+    await _box?.put('reminder_minute', minute);
+    state = ReminderState(enabled: state.enabled, hour: hour, minute: minute);
+    if (state.enabled) {
+      await ref.read(notificationServiceProvider).scheduleDaily(hour, minute);
+    }
+  }
+}
+
+final reminderProvider =
+    NotifierProvider<ReminderController, ReminderState>(ReminderController.new);
 
 /// The list of guarded apps, kept in sync with Hive and the native service.
 class ProtectedAppsNotifier extends Notifier<List<ProtectedApp>> {

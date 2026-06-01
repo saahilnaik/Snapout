@@ -16,6 +16,7 @@ class SettingsScreen extends ConsumerWidget {
     final pro = ref.watch(proProvider);
     final apps = ref.watch(protectedAppsProvider);
     final accentKey = ref.watch(accentProvider);
+    final reminder = ref.watch(reminderProvider);
 
     void snack(String msg) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -66,7 +67,12 @@ class SettingsScreen extends ConsumerWidget {
                       ? () => _showAccentPicker(context, ref, accentKey)
                       : () => snack('Custom themes are a Pro perk.'),
                 ),
-                (icon: Icons.notifications_none_rounded, title: 'Reminders', trailing: 'Off', onTap: null),
+                (
+                  icon: Icons.notifications_none_rounded,
+                  title: 'Reminders',
+                  trailing: reminder.enabled ? reminder.label : 'Off',
+                  onTap: () => _showReminderSheet(context),
+                ),
               ]),
               const SizedBox(height: AppSpacing.xl),
               const _Section('Support'),
@@ -93,6 +99,74 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showReminderSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+    ),
+    builder: (_) => const _ReminderSheet(),
+  );
+}
+
+class _ReminderSheet extends ConsumerWidget {
+  const _ReminderSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = Theme.of(context).textTheme;
+    final reminder = ref.watch(reminderProvider);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Daily reminder', style: t.titleMedium),
+            const SizedBox(height: AppSpacing.xs),
+            Text('A gentle nudge to stay mindful.',
+                style: t.bodyMedium?.copyWith(fontSize: 13)),
+            const SizedBox(height: AppSpacing.lg),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              activeThumbColor: AppColors.accent,
+              title: Text('Remind me', style: t.titleMedium),
+              value: reminder.enabled,
+              onChanged: (v) async {
+                final result = await ref.read(reminderProvider.notifier).setEnabled(v);
+                if (v && !result && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Allow notifications to enable reminders.')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              enabled: reminder.enabled,
+              leading: const Icon(Icons.schedule_rounded, color: AppColors.textMuted),
+              title: Text('Time', style: t.titleMedium),
+              trailing: Text(reminder.label,
+                  style: t.bodyLarge?.copyWith(color: AppColors.accent)),
+              onTap: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay(hour: reminder.hour, minute: reminder.minute),
+                );
+                if (picked != null) {
+                  await ref.read(reminderProvider.notifier).setTime(picked.hour, picked.minute);
+                }
+              },
+            ),
+          ],
         ),
       ),
     );
