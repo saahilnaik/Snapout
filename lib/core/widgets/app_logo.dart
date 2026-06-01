@@ -23,7 +23,7 @@ class SnapMark extends StatelessWidget {
         child: Container(
           width: size * 0.28,
           height: size * 0.28,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.accent,
           ),
@@ -45,8 +45,8 @@ class Wordmark extends StatelessWidget {
     return RichText(
       text: TextSpan(
         style: style,
-        children: const [
-          TextSpan(text: 'Snap', style: TextStyle(color: AppColors.textPrimary)),
+        children: [
+          const TextSpan(text: 'Snap', style: TextStyle(color: AppColors.textPrimary)),
           TextSpan(text: 'Out', style: TextStyle(color: AppColors.accent)),
         ],
       ),

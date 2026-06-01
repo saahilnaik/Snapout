@@ -27,7 +27,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   bool _overlayGranted = false;
 
   List<AppInfo>? _apps;
-  AppInfo? _selected;
+  final Set<String> _selected = {};
 
   static const _last = 2;
 
@@ -78,7 +78,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       case 1:
         return _usageGranted && _overlayGranted;
       case _last:
-        return _selected != null;
+        return _selected.isNotEmpty;
       default:
         return true;
     }
@@ -90,10 +90,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       return;
     }
     // Final page: persist + start the service, then leave onboarding.
-    final app = _selected!;
-    await ref.read(protectedAppsProvider.notifier).setApps([
-      ProtectedApp(packageName: app.packageName, name: app.name),
-    ]);
+    final chosen = (_apps ?? [])
+        .where((a) => _selected.contains(a.packageName))
+        .map((a) => ProtectedApp(packageName: a.packageName, name: a.name))
+        .toList();
+    await ref.read(protectedAppsProvider.notifier).setApps(chosen);
     if (mounted) context.pop();
   }
 
@@ -126,7 +127,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   _PickAppPage(
                     apps: _apps,
                     selected: _selected,
-                    onSelect: (a) => setState(() => _selected = a),
+                    isPro: ref.watch(proProvider).isPro,
+                    onSelect: (a) => setState(() {
+                      if (ref.read(proProvider).isPro) {
+                        if (!_selected.remove(a.packageName)) _selected.add(a.packageName);
+                      } else {
+                        _selected
+                          ..clear()
+                          ..add(a.packageName);
+                      }
+                    }),
                   ),
                 ],
               ),
@@ -272,7 +282,7 @@ class _PermissionRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           if (granted)
-            const Icon(Icons.check_circle_rounded, color: AppColors.accent)
+            Icon(Icons.check_circle_rounded, color: AppColors.accent)
           else
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
@@ -290,9 +300,15 @@ class _PermissionRow extends StatelessWidget {
 }
 
 class _PickAppPage extends StatelessWidget {
-  const _PickAppPage({required this.apps, required this.selected, required this.onSelect});
+  const _PickAppPage({
+    required this.apps,
+    required this.selected,
+    required this.isPro,
+    required this.onSelect,
+  });
   final List<AppInfo>? apps;
-  final AppInfo? selected;
+  final Set<String> selected;
+  final bool isPro;
   final ValueChanged<AppInfo> onSelect;
 
   @override
@@ -300,11 +316,13 @@ class _PickAppPage extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     return _OnboardPage(
       hero: const _CircleIcon(icon: Icons.touch_app_rounded),
-      title: 'Pick your first app',
-      body: 'Free covers one app. Choose the one that eats your time.',
+      title: isPro ? 'Pick your apps' : 'Pick your first app',
+      body: isPro
+          ? 'Pro covers as many apps as you like. Tap the ones that eat your time.'
+          : 'Free covers one app. Choose the one that eats your time. (Pro unlocks unlimited.)',
       extra: apps == null
-          ? const Padding(
-              padding: EdgeInsets.only(top: AppSpacing.xxl),
+          ? Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xxl),
               child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
             )
           : Column(
@@ -312,17 +330,17 @@ class _PickAppPage extends StatelessWidget {
                 for (final app in apps!) ...[
                   AppCard(
                     onTap: () => onSelect(app),
-                    color: selected?.packageName == app.packageName ? AppColors.accentSoft : null,
+                    color: selected.contains(app.packageName) ? AppColors.accentSoft : null,
                     child: Row(
                       children: [
                         _AppIcon(app: app),
                         const SizedBox(width: AppSpacing.lg),
                         Expanded(child: Text(app.name, style: t.titleMedium)),
                         Icon(
-                          selected?.packageName == app.packageName
+                          selected.contains(app.packageName)
                               ? Icons.check_circle_rounded
                               : Icons.circle_outlined,
-                          color: selected?.packageName == app.packageName
+                          color: selected.contains(app.packageName)
                               ? AppColors.accent
                               : AppColors.textFaint,
                         ),

@@ -220,8 +220,8 @@ class _BreathCircle extends StatelessWidget {
                   height: 200,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const RadialGradient(
-                      colors: [AppColors.accent, Color(0xFF6F8F00)],
+                    gradient: RadialGradient(
+                      colors: [AppColors.accent, const Color(0xFF6F8F00)],
                     ),
                     boxShadow: [
                       // Glow grows brighter and wider on the inhale.

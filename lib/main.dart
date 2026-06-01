@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/providers.dart';
 import 'core/router/app_router.dart';
+import 'core/services/entitlement_store.dart';
 import 'core/services/protected_apps_store.dart';
 import 'core/theme/app_theme.dart';
 
@@ -12,6 +13,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox(ProtectedAppsStore.boxName);
+  // Apply the saved accent before the first frame.
+  AppColors.applyAccent(AccentPreset.byKey(EntitlementStore().accentKey));
   // Edge-to-edge with light icons on our dark canvas.
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(AppTheme.systemUiOverlay);
@@ -53,6 +56,8 @@ class _SnapOutAppState extends ConsumerState<SnapOutApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Rebuild the theme (and the whole tree) when the accent changes.
+    ref.watch(accentProvider);
     return MaterialApp.router(
       title: 'SnapOut',
       debugShowCheckedModeBanner: false,
