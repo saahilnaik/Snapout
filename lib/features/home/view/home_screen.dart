@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/providers.dart';
+import '../../../core/services/protected_apps_store.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_logo.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
+    final apps = ref.watch(protectedAppsProvider);
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -21,7 +25,6 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Brand row.
               FadeSlideIn(
                 child: Row(
                   children: [
@@ -43,15 +46,11 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xxl),
-
-              // Status hero.
               FadeSlideIn(
                 delay: const Duration(milliseconds: 80),
-                child: _StatusHero(textTheme: t),
+                child: _StatusHero(textTheme: t, apps: apps),
               ),
               const SizedBox(height: AppSpacing.lg),
-
-              // Today peek.
               FadeSlideIn(
                 delay: const Duration(milliseconds: 160),
                 child: Row(
@@ -63,13 +62,11 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-
-              // Primary CTA.
               FadeSlideIn(
                 delay: const Duration(milliseconds: 240),
                 child: PrimaryButton(
-                  label: 'Add an app to protect',
-                  icon: Icons.add_rounded,
+                  label: apps.isEmpty ? 'Add an app to protect' : 'Manage protected apps',
+                  icon: apps.isEmpty ? Icons.add_rounded : Icons.tune_rounded,
                   onPressed: () => context.push('/onboarding'),
                 ),
               ),
@@ -91,11 +88,17 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _StatusHero extends StatelessWidget {
-  const _StatusHero({required this.textTheme});
+  const _StatusHero({required this.textTheme, required this.apps});
   final TextTheme textTheme;
+  final List<ProtectedApp> apps;
 
   @override
   Widget build(BuildContext context) {
+    final protecting = apps.isNotEmpty;
+    final title = 'Guarding ${apps.length} app${apps.length == 1 ? '' : 's'}';
+    final subtitle = protecting
+        ? apps.map((a) => a.name).join(', ')
+        : 'Not protecting anything yet';
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
@@ -109,10 +112,9 @@ class _StatusHero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Guarding 0 apps', style: textTheme.headlineSmall),
+                    Text(title, style: textTheme.headlineSmall),
                     const SizedBox(height: 4),
-                    Text('Not protecting anything yet',
-                        style: textTheme.bodyMedium),
+                    Text(subtitle, style: textTheme.bodyMedium),
                   ],
                 ),
               ),
@@ -122,7 +124,9 @@ class _StatusHero extends StatelessWidget {
           const Divider(),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            "Pick an app you doomscroll. SnapOut makes you take 3 breaths before it opens — so you choose, not the habit.",
+            protecting
+                ? "When you open it, SnapOut steps in for 3 breaths first — so you choose, not the habit."
+                : "Pick an app you doomscroll. SnapOut makes you take 3 breaths before it opens — so you choose, not the habit.",
             style: textTheme.bodyLarge,
           ),
         ],
