@@ -39,9 +39,14 @@ Console via `in_app_purchase`).
    resumes on app start.
 5. ✅ Decision behavior + real stats: skip → launcher (+log skip), open → reveal app
    (+log open); Home/Stats show live data (skips, streak, minutes saved, weekly bars).
+6. ✅ IAP + Pro: `in_app_purchase` (non-consumable `snapout_pro`) + EntitlementStore
+   (Hive `is_pro`); `proProvider`. Gates: unlimited apps (multi-select picker),
+   shareable stats card (RepaintBoundary→PNG→share_plus), custom accent themes
+   (mutable `AppColors` + presets, app root rebuilds on change). Real Play buy/restore
+   wired; **debug-only unlock** in debug builds until the Play product exists (no
+   account yet). The "Unlock Pro — ₹149" button no-ops with a snackbar until then.
 
-NOT built yet: **IAP (₹149 Pro)** + Pro-gated features (multiple apps, 30-day stats,
-shareable card), reminders/notifications, iOS.
+NOT built yet: reminders/notifications, light theme, iOS, Play Console publishing.
 
 Known rough edge: repeated triggers can leave the SnapOut/breathing task stacked oddly
 when re-entering from the launcher — pop the breathing route fully on dismiss in a
