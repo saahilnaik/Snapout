@@ -32,6 +32,12 @@ class DetectionService {
   Future<bool> isServiceRunning() async =>
       await _method.invokeMethod<bool>('isServiceRunning') ?? false;
 
+  /// Skip: leave the protected app, drop the user on their launcher.
+  Future<void> goHome() => _method.invokeMethod('goHome');
+
+  /// Open anyway: send SnapOut behind, revealing the protected app.
+  Future<void> moveToBack() => _method.invokeMethod('moveToBack');
+
   /// Stream of package names detected coming to the foreground.
   Stream<String> get detections =>
       _events.receiveBroadcastStream().map((e) => e as String);

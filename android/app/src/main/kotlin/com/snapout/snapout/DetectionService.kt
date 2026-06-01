@@ -124,7 +124,7 @@ class DetectionService : Service() {
                     Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP,
             )
-            putExtra(MainActivity.EXTRA_ROUTE, "/breathing")
+            putExtra(MainActivity.EXTRA_ROUTE, "/breathing?live=1&pkg=$blockedPackage")
             putExtra(MainActivity.EXTRA_BLOCKED_PACKAGE, blockedPackage)
         }
         startActivity(intent)

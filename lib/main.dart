@@ -32,10 +32,16 @@ class _SnapOutAppState extends ConsumerState<SnapOutApp> {
     final detection = ref.read(detectionServiceProvider);
     // Warm path: native pushes a route while we're alive.
     detection.onLaunchRoute(_go);
-    // Cold path: pull any route stashed before Dart was ready.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Cold path: pull any route stashed before Dart was ready.
       final route = await detection.consumeLaunchRoute();
       if (route != null) _go(route);
+      // Resume protection if apps are configured but the service isn't running
+      // (after an app restart/update or reboot).
+      final apps = ref.read(protectedAppsProvider);
+      if (apps.isNotEmpty && !await detection.isServiceRunning()) {
+        await detection.startService(apps.map((a) => a.packageName).toList());
+      }
     });
   }
 

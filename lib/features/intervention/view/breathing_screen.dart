@@ -2,24 +2,29 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/providers.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/app_buttons.dart';
 
-/// The intervention. Three guided breaths, then a gentle choice. In a real
-/// launch this is shown as a system overlay when a protected app opens; here
-/// it's a full-screen route reachable from Home for preview.
-class BreathingScreen extends StatefulWidget {
+/// The intervention. Three guided breaths, then a gentle choice.
+///
+/// When fired by the detection service the route carries `?live=1&pkg=<package>`:
+/// the decision is logged and we either drop the user on their launcher (skip)
+/// or reveal the protected app (open). Opened from Home without those params it
+/// is just a preview that pops back.
+class BreathingScreen extends ConsumerStatefulWidget {
   const BreathingScreen({super.key});
 
   static const int totalBreaths = 3;
 
   @override
-  State<BreathingScreen> createState() => _BreathingScreenState();
+  ConsumerState<BreathingScreen> createState() => _BreathingScreenState();
 }
 
-class _BreathingScreenState extends State<BreathingScreen>
+class _BreathingScreenState extends ConsumerState<BreathingScreen>
     with SingleTickerProviderStateMixin {
   // One cycle = 4s inhale + 4s exhale (a calm, even breath).
   late final AnimationController _c =
@@ -73,6 +78,33 @@ class _BreathingScreenState extends State<BreathingScreen>
   /// Smooth at both turns (no jerk), peaking at mid-cycle — like real lungs.
   static double breathPhase(double value) => (1 - math.cos(value * 2 * math.pi)) / 2;
 
+  ({bool live, String pkg}) _params() {
+    final q = GoRouterState.of(context).uri.queryParameters;
+    return (live: q['live'] == '1', pkg: q['pkg'] ?? '');
+  }
+
+  Future<void> _onSkip() async {
+    final p = _params();
+    if (!p.live) {
+      context.pop();
+      return;
+    }
+    await ref.read(statsProvider.notifier).logSkip(p.pkg);
+    if (mounted) context.pop();
+    await ref.read(detectionServiceProvider).goHome();
+  }
+
+  Future<void> _onOpen() async {
+    final p = _params();
+    if (!p.live) {
+      context.pop();
+      return;
+    }
+    await ref.read(statsProvider.notifier).logOpen(p.pkg);
+    if (mounted) context.pop();
+    await ref.read(detectionServiceProvider).moveToBack();
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
@@ -117,9 +149,9 @@ class _BreathingScreenState extends State<BreathingScreen>
                   ),
                   // Decision pinned to the bottom — only once breaths are done.
                   if (_done)
-                    const Align(
+                    Align(
                       alignment: Alignment.bottomCenter,
-                      child: _Decision(),
+                      child: _Decision(onSkip: _onSkip, onOpen: _onOpen),
                     ),
                 ],
               ),
@@ -225,7 +257,10 @@ class _BreathCircle extends StatelessWidget {
 }
 
 class _Decision extends StatelessWidget {
-  const _Decision();
+  const _Decision({required this.onSkip, required this.onOpen});
+
+  final VoidCallback onSkip;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -237,12 +272,12 @@ class _Decision extends StatelessWidget {
         PrimaryButton(
           label: "Nah, I'm good",
           icon: Icons.check_rounded,
-          onPressed: () => context.pop(),
+          onPressed: onSkip,
         ),
         const SizedBox(height: AppSpacing.md),
         GhostButton(
           label: 'Open anyway',
-          onPressed: () => context.pop(),
+          onPressed: onOpen,
         ),
       ],
     );

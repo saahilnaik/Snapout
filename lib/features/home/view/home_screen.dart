@@ -17,6 +17,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
     final apps = ref.watch(protectedAppsProvider);
+    final stats = ref.watch(statsProvider);
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -55,9 +56,15 @@ class HomeScreen extends ConsumerWidget {
                 delay: const Duration(milliseconds: 160),
                 child: Row(
                   children: [
-                    Expanded(child: _MiniStat(label: 'Skipped today', value: '0', accent: true)),
+                    Expanded(
+                        child: _MiniStat(
+                            label: 'Skipped today',
+                            value: '${stats.todaySkipped}',
+                            accent: true)),
                     const SizedBox(width: AppSpacing.md),
-                    Expanded(child: _MiniStat(label: 'Opened today', value: '0')),
+                    Expanded(
+                        child: _MiniStat(
+                            label: 'Opened today', value: '${stats.todayOpened}')),
                   ],
                 ),
               ),

@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 
-class StatsScreen extends StatelessWidget {
+class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
+    final stats = ref.watch(statsProvider);
+    final hours = stats.minutesSaved ~/ 60;
+    final mins = stats.minutesSaved % 60;
     return Scaffold(
       appBar: AppBar(title: const Text('Stats')),
       body: SafeArea(
@@ -28,11 +33,15 @@ class StatsScreen extends StatelessWidget {
                     children: [
                       Text('Time saved', style: t.bodyMedium),
                       const SizedBox(height: AppSpacing.sm),
-                      Text('0h 0m',
+                      Text('${hours}h ${mins}m',
                           style: t.displayLarge?.copyWith(color: AppColors.accent)),
                       const SizedBox(height: 4),
-                      Text('Skipped opens add up. Start protecting an app to see this grow.',
-                          style: t.bodyMedium),
+                      Text(
+                        stats.totalSkips == 0
+                            ? 'Skipped opens add up. Start protecting an app to see this grow.'
+                            : 'Estimated from ${stats.totalSkips} skipped opens (~15 min each).',
+                        style: t.bodyMedium,
+                      ),
                     ],
                   ),
                 ),
@@ -41,10 +50,12 @@ class StatsScreen extends StatelessWidget {
               FadeSlideIn(
                 delay: const Duration(milliseconds: 80),
                 child: Row(
-                  children: const [
-                    Expanded(child: _Metric(value: '0', label: 'Total skips')),
-                    SizedBox(width: AppSpacing.md),
-                    Expanded(child: _Metric(value: '0', label: 'Day streak', accent: true)),
+                  children: [
+                    Expanded(child: _Metric(value: '${stats.totalSkips}', label: 'Total skips')),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                        child: _Metric(
+                            value: '${stats.streakDays}', label: 'Day streak', accent: true)),
                   ],
                 ),
               ),
@@ -58,7 +69,7 @@ class StatsScreen extends StatelessWidget {
                     children: [
                       Text('This week', style: t.titleMedium),
                       const SizedBox(height: AppSpacing.xl),
-                      const _WeekBars(),
+                      _WeekBars(counts: stats.weekSkips),
                     ],
                   ),
                 ),
@@ -121,29 +132,37 @@ class _Metric extends StatelessWidget {
 }
 
 class _WeekBars extends StatelessWidget {
-  const _WeekBars();
+  const _WeekBars({required this.counts});
+  final List<int> counts;
   static const _days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final max = counts.fold<int>(0, (m, c) => c > m ? c : m);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        for (final d in _days)
+        for (var i = 0; i < 7; i++)
           Column(
             children: [
+              if (counts[i] > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('${counts[i]}',
+                      style: t.bodyMedium?.copyWith(fontSize: 11, color: AppColors.accent)),
+                ),
               Container(
                 width: 26,
-                height: 80,
+                height: counts[i] == 0 ? 6.0 : 16.0 + 64.0 * (counts[i] / (max == 0 ? 1 : max)),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceHigh,
+                  color: counts[i] > 0 ? AppColors.accent : AppColors.surfaceHigh,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(d, style: t.bodyMedium?.copyWith(fontSize: 12)),
+              Text(_days[i], style: t.bodyMedium?.copyWith(fontSize: 12)),
             ],
           ),
       ],

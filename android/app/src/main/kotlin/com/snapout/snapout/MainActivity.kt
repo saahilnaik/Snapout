@@ -103,6 +103,21 @@ class MainActivity : FlutterActivity() {
                 result.success(true)
             }
             "isServiceRunning" -> result.success(DetectionService.isRunning)
+            "goHome" -> {
+                // Skip: leave the protected app behind, drop the user on their launcher.
+                startActivity(
+                    Intent(Intent.ACTION_MAIN).apply {
+                        addCategory(Intent.CATEGORY_HOME)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    },
+                )
+                result.success(null)
+            }
+            "moveToBack" -> {
+                // Open anyway: send SnapOut behind, revealing the protected app.
+                moveTaskToBack(true)
+                result.success(null)
+            }
             "consumeLaunchRoute" -> {
                 result.success(pendingRoute)
                 pendingRoute = null
