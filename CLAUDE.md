@@ -46,7 +46,19 @@ Console via `in_app_purchase`).
    wired; **debug-only unlock** in debug builds until the Play product exists (no
    account yet). The "Unlock Pro — ₹149" button no-ops with a snackbar until then.
 
-NOT built yet: reminders/notifications, light theme, iOS, Play Console publishing.
+7. ✅ Reminders: daily local notification (flutter_local_notifications + timezone),
+   Settings sheet (switch + time picker), Hive-persisted; reschedules on reboot.
+   Task-stack fix: main dedupes the `/breathing` push by path so repeated detections
+   don't stack screens.
+8. ✅ Light/dark/system theme: `AppColors` surfaces+text are mutable, `applyTheme(Brightness)`
+   swaps them, `accentSoft` is a translucent accent. `themeModeProvider` (Hive) + Settings
+   Theme picker; reacts to OS brightness in system mode. NOTE: widgets read static
+   `AppColors` (no Theme dependency), so the app root **re-keys MaterialApp on
+   brightness/accent** to force a full rebuild (incl. go_router's cached shell). When
+   adding chrome that must recolor, rely on that rekey, not Theme.of.
+
+NOT built yet: iOS, Play Console publishing. Backlog: bundle real fonts (Clash/Satoshi),
+30-day stats view.
 
 Known rough edge: repeated triggers can leave the SnapOut/breathing task stacked oddly
 when re-entering from the launcher — pop the breathing route fully on dismiss in a
