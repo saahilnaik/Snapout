@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -194,6 +195,29 @@ class ReminderController extends Notifier<ReminderState> {
 
 final reminderProvider =
     NotifierProvider<ReminderController, ReminderState>(ReminderController.new);
+
+// --- Theme mode (light / dark / system) ---
+
+class ThemeModeController extends Notifier<ThemeMode> {
+  Box? get _box => Hive.isBoxOpen('snapout') ? Hive.box('snapout') : null;
+
+  @override
+  ThemeMode build() => _parse(_box?.get('theme_mode', defaultValue: 'system') as String?);
+
+  Future<void> setMode(ThemeMode mode) async {
+    await _box?.put('theme_mode', mode.name);
+    state = mode;
+  }
+
+  ThemeMode _parse(String? s) => switch (s) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
+      };
+}
+
+final themeModeProvider =
+    NotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
 
 /// The list of guarded apps, kept in sync with Hive and the native service.
 class ProtectedAppsNotifier extends Notifier<List<ProtectedApp>> {

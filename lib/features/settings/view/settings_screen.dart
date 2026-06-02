@@ -17,6 +17,12 @@ class SettingsScreen extends ConsumerWidget {
     final apps = ref.watch(protectedAppsProvider);
     final accentKey = ref.watch(accentProvider);
     final reminder = ref.watch(reminderProvider);
+    final themeMode = ref.watch(themeModeProvider);
+    String themeLabel(ThemeMode m) => switch (m) {
+          ThemeMode.light => 'Light',
+          ThemeMode.dark => 'Dark',
+          ThemeMode.system => 'System',
+        };
 
     void snack(String msg) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -59,6 +65,12 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.xl),
               const _Section('App'),
               _SettingsGroup(rows: [
+                (
+                  icon: Icons.brightness_6_outlined,
+                  title: 'Theme',
+                  trailing: themeLabel(themeMode),
+                  onTap: () => _showThemePicker(context, ref, themeMode),
+                ),
                 (
                   icon: Icons.palette_outlined,
                   title: 'Accent',
@@ -103,6 +115,51 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showThemePicker(BuildContext context, WidgetRef ref, ThemeMode current) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+    ),
+    builder: (sheetContext) {
+      final t = Theme.of(sheetContext).textTheme;
+      const options = [
+        (mode: ThemeMode.system, label: 'System', icon: Icons.brightness_auto_rounded),
+        (mode: ThemeMode.light, label: 'Light', icon: Icons.light_mode_rounded),
+        (mode: ThemeMode.dark, label: 'Dark', icon: Icons.dark_mode_rounded),
+      ];
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Theme', style: t.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              for (final o in options)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(o.icon,
+                      color: o.mode == current ? AppColors.accent : AppColors.textMuted),
+                  title: Text(o.label, style: t.titleMedium),
+                  trailing: o.mode == current
+                      ? Icon(Icons.check_rounded, color: AppColors.accent)
+                      : null,
+                  onTap: () {
+                    ref.read(themeModeProvider.notifier).setMode(o.mode);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 void _showReminderSheet(BuildContext context) {
@@ -152,7 +209,7 @@ class _ReminderSheet extends ConsumerWidget {
             ListTile(
               contentPadding: EdgeInsets.zero,
               enabled: reminder.enabled,
-              leading: const Icon(Icons.schedule_rounded, color: AppColors.textMuted),
+              leading: Icon(Icons.schedule_rounded, color: AppColors.textMuted),
               title: Text('Time', style: t.titleMedium),
               trailing: Text(reminder.label,
                   style: t.bodyLarge?.copyWith(color: AppColors.accent)),
@@ -372,7 +429,7 @@ class _SettingsRow extends StatelessWidget {
             if (row.trailing.isNotEmpty)
               Text(row.trailing, style: t.bodyMedium?.copyWith(fontSize: 13)),
             const SizedBox(width: AppSpacing.sm),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+            Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
           ],
         ),
       ),

@@ -13,13 +13,20 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox(ProtectedAppsStore.boxName);
-  // Apply the saved accent before the first frame.
-  AppColors.applyAccent(AccentPreset.byKey(EntitlementStore().accentKey));
-  // Edge-to-edge with light icons on our dark canvas.
+  // Apply saved theme + accent before the first frame.
+  final store = EntitlementStore();
+  AppColors.applyTheme(_brightnessFor(store.themeMode));
+  AppColors.applyAccent(AccentPreset.byKey(store.accentKey));
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(AppTheme.systemUiOverlay);
   runApp(const ProviderScope(child: SnapOutApp()));
 }
+
+Brightness _brightnessFor(ThemeMode mode) => switch (mode) {
+      ThemeMode.light => Brightness.light,
+      ThemeMode.dark => Brightness.dark,
+      ThemeMode.system =>
+        WidgetsBinding.instance.platformDispatcher.platformBrightness,
+    };
 
 class SnapOutApp extends ConsumerStatefulWidget {
   const SnapOutApp({super.key});
@@ -28,10 +35,11 @@ class SnapOutApp extends ConsumerStatefulWidget {
   ConsumerState<SnapOutApp> createState() => _SnapOutAppState();
 }
 
-class _SnapOutAppState extends ConsumerState<SnapOutApp> {
+class _SnapOutAppState extends ConsumerState<SnapOutApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final detection = ref.read(detectionServiceProvider);
     // Warm path: native pushes a route while we're alive.
     detection.onLaunchRoute(_go);
@@ -48,6 +56,18 @@ class _SnapOutAppState extends ConsumerState<SnapOutApp> {
     });
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    // React to OS light/dark switches when in system mode.
+    if (mounted) setState(() {});
+  }
+
   void _go(String route) {
     // Don't stack a second breathing screen if one is already showing (repeated
     // triggers each carry a different ?pkg=, so compare path only).
@@ -58,12 +78,21 @@ class _SnapOutAppState extends ConsumerState<SnapOutApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Rebuild the theme (and the whole tree) when the accent changes.
-    ref.watch(accentProvider);
+    // Recompute palette when accent or theme mode changes (or OS brightness).
+    final mode = ref.watch(themeModeProvider);
+    final accentKey = ref.watch(accentProvider);
+    final brightness = _brightnessFor(mode);
+    AppColors.applyTheme(brightness);
+    AppColors.applyAccent(AccentPreset.byKey(accentKey));
+    SystemChrome.setSystemUIOverlayStyle(AppTheme.overlayFor(brightness));
     return MaterialApp.router(
+      // Re-key on theme/accent so widgets reading the (static) AppColors — incl.
+      // go_router's cached shell — rebuild. Router state lives in appRouter, so
+      // navigation is preserved across the rekey.
+      key: ValueKey('${brightness.name}_$accentKey'),
       title: 'SnapOut',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.theme(brightness),
       routerConfig: appRouter,
     );
   }

@@ -46,7 +46,7 @@ class Wordmark extends StatelessWidget {
       text: TextSpan(
         style: style,
         children: [
-          const TextSpan(text: 'Snap', style: TextStyle(color: AppColors.textPrimary)),
+          TextSpan(text: 'Snap', style: TextStyle(color: AppColors.textPrimary)),
           TextSpan(text: 'Out', style: TextStyle(color: AppColors.accent)),
         ],
       ),

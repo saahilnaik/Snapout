@@ -8,28 +8,50 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Surfaces — cool near-blacks, layered by elevation.
-  static const Color bg = Color(0xFF0A0B0D);
-  static const Color surface = Color(0xFF131519);
-  static const Color surfaceHigh = Color(0xFF1C1F24);
-  static const Color border = Color(0xFF262A30);
+  // Surfaces — mutable for light/dark. Defaults are the dark palette.
+  static Color bg = const Color(0xFF0A0B0D);
+  static Color surface = const Color(0xFF131519);
+  static Color surfaceHigh = const Color(0xFF1C1F24);
+  static Color border = const Color(0xFF262A30);
 
   // The one accent — mutable so Pro users can re-theme it. Changing these and
   // rebuilding the app root recolors everything that reads them.
   static Color accent = const Color(0xFFBFFF00);
-  static Color accentSoft = const Color(0xFF2B330A); // tinted fill on dark
+  static Color accentSoft = const Color(0x24BFFF00); // ~14% accent — set in applyAccent
   static Color onAccent = const Color(0xFF0A0B0D);
 
-  // Text.
-  static const Color textPrimary = Color(0xFFF4F5F7);
-  static const Color textMuted = Color(0xFF9BA1AC);
-  static const Color textFaint = Color(0xFF6B7280);
+  // Text — mutable for light/dark.
+  static Color textPrimary = const Color(0xFFF4F5F7);
+  static Color textMuted = const Color(0xFF9BA1AC);
+  static Color textFaint = const Color(0xFF6B7280);
 
-  /// Apply an accent preset (call before building the app theme).
+  /// Apply an accent preset. accentSoft is a translucent accent so it tints
+  /// correctly on either a light or dark surface.
   static void applyAccent(AccentPreset p) {
     accent = p.accent;
-    accentSoft = p.accentSoft;
     onAccent = p.onAccent;
+    accentSoft = p.accent.withValues(alpha: 0.14);
+  }
+
+  /// Swap the surface + text palette for the given brightness.
+  static void applyTheme(Brightness brightness) {
+    if (brightness == Brightness.light) {
+      bg = const Color(0xFFF6F7F9);
+      surface = const Color(0xFFFFFFFF);
+      surfaceHigh = const Color(0xFFEDEFF3);
+      border = const Color(0xFFE2E5EA);
+      textPrimary = const Color(0xFF14161A);
+      textMuted = const Color(0xFF5A616B);
+      textFaint = const Color(0xFF99A0AA);
+    } else {
+      bg = const Color(0xFF0A0B0D);
+      surface = const Color(0xFF131519);
+      surfaceHigh = const Color(0xFF1C1F24);
+      border = const Color(0xFF262A30);
+      textPrimary = const Color(0xFFF4F5F7);
+      textMuted = const Color(0xFF9BA1AC);
+      textFaint = const Color(0xFF6B7280);
+    }
   }
 }
 

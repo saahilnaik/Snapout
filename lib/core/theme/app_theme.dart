@@ -10,20 +10,25 @@ export 'app_tokens.dart';
 class AppTheme {
   const AppTheme._();
 
-  /// Status/nav bar styling — transparent bars, light icons on our dark canvas.
-  static const SystemUiOverlayStyle systemUiOverlay = SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: AppColors.bg,
-    systemNavigationBarIconBrightness: Brightness.light,
-  );
+  /// Status/nav bar styling — transparent bars; icon brightness flips with theme.
+  static SystemUiOverlayStyle overlayFor(Brightness brightness) {
+    final iconsLight = brightness == Brightness.dark;
+    return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: iconsLight ? Brightness.light : Brightness.dark,
+      systemNavigationBarColor: AppColors.bg,
+      systemNavigationBarIconBrightness: iconsLight ? Brightness.light : Brightness.dark,
+    );
+  }
 
-  static ThemeData get dark {
-    final base = ThemeData(brightness: Brightness.dark, useMaterial3: true);
+  /// Build the theme from the current [AppColors] for the given brightness.
+  /// Call [AppColors.applyTheme] / [AppColors.applyAccent] first.
+  static ThemeData theme(Brightness brightness) {
+    final base = ThemeData(brightness: brightness, useMaterial3: true);
 
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.accent,
-      brightness: Brightness.dark,
+      brightness: brightness,
     ).copyWith(
       primary: AppColors.accent,
       onPrimary: AppColors.onAccent,
@@ -75,13 +80,13 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        systemOverlayStyle: systemUiOverlay,
+        systemOverlayStyle: overlayFor(brightness),
         titleTextStyle: textTheme.headlineSmall,
       ),
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: AppColors.border, thickness: 1, space: 1,
       ),
-      iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      iconTheme: IconThemeData(color: AppColors.textPrimary),
     );
   }
 }

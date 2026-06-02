@@ -176,10 +176,10 @@ class _ShareCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF16180A), AppColors.bg],
+          colors: [AppColors.accentSoft, AppColors.bg],
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
@@ -236,7 +236,7 @@ class _LockedProCard extends StatelessWidget {
     return AppCard(
       child: Row(
         children: [
-          const Icon(Icons.lock_outline_rounded, color: AppColors.textFaint),
+          Icon(Icons.lock_outline_rounded, color: AppColors.textFaint),
           const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(

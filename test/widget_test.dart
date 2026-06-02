@@ -12,7 +12,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp.router(
-          theme: AppTheme.dark,
+          theme: AppTheme.theme(Brightness.dark),
           routerConfig: appRouter,
         ),
       ),

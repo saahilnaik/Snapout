@@ -114,11 +114,11 @@ class _BreathingScreenState extends ConsumerState<BreathingScreen>
       child: Scaffold(
         backgroundColor: AppColors.bg,
         body: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: RadialGradient(
-              center: Alignment(0, -0.2),
+              center: const Alignment(0, -0.2),
               radius: 1.1,
-              colors: [Color(0xFF14180A), AppColors.bg],
+              colors: [AppColors.accentSoft, AppColors.bg],
             ),
           ),
           child: SafeArea(

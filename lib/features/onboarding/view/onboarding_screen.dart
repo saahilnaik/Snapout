@@ -363,7 +363,7 @@ class _AppIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = app.icon;
     if (icon == null) {
-      return const Icon(Icons.android, color: AppColors.textMuted);
+      return Icon(Icons.android, color: AppColors.textMuted);
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.sm),

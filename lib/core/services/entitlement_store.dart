@@ -1,12 +1,20 @@
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-/// Persists the Pro entitlement and the chosen accent theme.
+/// Persists the Pro entitlement and theme prefs (accent + light/dark mode).
 class EntitlementStore {
   static const boxName = 'snapout';
   static const _keyPro = 'is_pro';
   static const _keyAccent = 'accent';
+  static const _keyThemeMode = 'theme_mode';
 
   Box? get _box => Hive.isBoxOpen(boxName) ? Hive.box(boxName) : null;
+
+  ThemeMode get themeMode => switch (_box?.get(_keyThemeMode, defaultValue: 'system') as String?) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
+      };
 
   bool get isPro => (_box?.get(_keyPro, defaultValue: false) as bool?) ?? false;
 
