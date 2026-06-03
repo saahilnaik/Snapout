@@ -41,9 +41,16 @@ class SettingsScreen extends ConsumerWidget {
               FadeSlideIn(
                 child: _ProCard(
                   pro: pro,
-                  onBuy: () async {
+                  onBuyAnnual: () async {
                     if (pro.storeReady) {
-                      await ref.read(proProvider.notifier).buy();
+                      await ref.read(proProvider.notifier).buyAnnual();
+                    } else {
+                      snack('Purchases go live once SnapOut is on Google Play.');
+                    }
+                  },
+                  onBuyLifetime: () async {
+                    if (pro.storeReady) {
+                      await ref.read(proProvider.notifier).buyLifetime();
                     } else {
                       snack('Purchases go live once SnapOut is on Google Play.');
                     }
@@ -287,10 +294,16 @@ void _showAccentPicker(BuildContext context, WidgetRef ref, String currentKey) {
 }
 
 class _ProCard extends StatelessWidget {
-  const _ProCard({required this.pro, required this.onBuy, required this.onDebugUnlock});
+  const _ProCard({
+    required this.pro,
+    required this.onBuyAnnual,
+    required this.onBuyLifetime,
+    required this.onDebugUnlock,
+  });
 
   final ProState pro;
-  final VoidCallback onBuy;
+  final VoidCallback onBuyAnnual;
+  final VoidCallback onBuyLifetime;
   final VoidCallback onDebugUnlock;
 
   @override
@@ -328,7 +341,7 @@ class _ProCard extends StatelessWidget {
             children: [
               Text('SnapOut Pro', style: t.headlineSmall?.copyWith(color: AppColors.accent)),
               const SizedBox(width: AppSpacing.sm),
-              Text('${pro.priceLabel} · one-time',
+              Text('${pro.priceAnnual} or ${pro.priceLifetime}',
                   style: t.bodyMedium?.copyWith(color: AppColors.textMuted, fontSize: 13)),
             ],
           ),
@@ -349,7 +362,9 @@ class _ProCard extends StatelessWidget {
                 ),
               )),
           const SizedBox(height: AppSpacing.sm),
-          PrimaryButton(label: 'Unlock Pro — ${pro.priceLabel}', onPressed: onBuy),
+          PrimaryButton(label: 'Get Lifetime — ${pro.priceLifetime}', onPressed: onBuyLifetime),
+          const SizedBox(height: AppSpacing.sm),
+          GhostButton(label: 'Subscribe Annual — ${pro.priceAnnual}', onPressed: onBuyAnnual),
           if (kDebugMode) ...[
             const SizedBox(height: AppSpacing.sm),
             Center(

@@ -46,21 +46,44 @@ final entitlementStoreProvider = Provider<EntitlementStore>((ref) => Entitlement
 final purchaseServiceProvider = Provider<PurchaseService>((ref) => PurchaseService());
 
 class ProState {
-  const ProState({required this.isPro, required this.priceLabel, required this.storeReady});
+  const ProState({
+    required this.isPro,
+    required this.priceAnnual,
+    required this.priceLifetime,
+    required this.storeReady,
+    this.annualProduct,
+    this.lifetimeProduct,
+  });
 
   /// Pro unlocked (purchased, restored, or debug-unlocked).
   final bool isPro;
 
-  /// Display price — real from Play when available, else the planned default.
-  final String priceLabel;
+  /// Display price for annual subscription.
+  final String priceAnnual;
+
+  /// Display price for lifetime purchase.
+  final String priceLifetime;
 
   /// True when the Play product is queryable (a real purchase can be started).
   final bool storeReady;
 
-  ProState copyWith({bool? isPro, String? priceLabel, bool? storeReady}) => ProState(
+  final ProductDetails? annualProduct;
+  final ProductDetails? lifetimeProduct;
+
+  ProState copyWith({
+    bool? isPro,
+    String? priceAnnual,
+    String? priceLifetime,
+    bool? storeReady,
+    ProductDetails? annualProduct,
+    ProductDetails? lifetimeProduct,
+  }) => ProState(
         isPro: isPro ?? this.isPro,
-        priceLabel: priceLabel ?? this.priceLabel,
+        priceAnnual: priceAnnual ?? this.priceAnnual,
+        priceLifetime: priceLifetime ?? this.priceLifetime,
         storeReady: storeReady ?? this.storeReady,
+        annualProduct: annualProduct ?? this.annualProduct,
+        lifetimeProduct: lifetimeProduct ?? this.lifetimeProduct,
       );
 }
 
@@ -68,7 +91,6 @@ class ProController extends Notifier<ProState> {
   late final PurchaseService _svc;
   late final EntitlementStore _store;
   StreamSubscription<List<PurchaseDetails>>? _sub;
-  ProductDetails? _product;
 
   @override
   ProState build() {
@@ -77,14 +99,40 @@ class ProController extends Notifier<ProState> {
     _sub = _svc.purchaseStream.listen(_onPurchases);
     ref.onDispose(() => _sub?.cancel());
     _init();
-    return ProState(isPro: _store.isPro, priceLabel: '₹149', storeReady: false);
+    return ProState(
+      isPro: _store.isPro,
+      priceAnnual: '₹499/yr',
+      priceLifetime: '₹799',
+      storeReady: false,
+    );
   }
 
   Future<void> _init() async {
     if (!await _svc.available()) return;
-    _product = await _svc.proProduct();
-    if (_product != null) {
-      state = state.copyWith(priceLabel: _product!.price, storeReady: true);
+    final products = await _svc.queryProducts();
+    ProductDetails? annual;
+    ProductDetails? lifetime;
+    String? priceAnnual;
+    String? priceLifetime;
+
+    for (final p in products) {
+      if (p.id == PurchaseService.productIdAnnual) {
+        annual = p;
+        priceAnnual = p.price;
+      } else if (p.id == PurchaseService.productIdLifetime) {
+        lifetime = p;
+        priceLifetime = p.price;
+      }
+    }
+
+    if (annual != null || lifetime != null) {
+      state = state.copyWith(
+        storeReady: true,
+        annualProduct: annual,
+        lifetimeProduct: lifetime,
+        priceAnnual: priceAnnual,
+        priceLifetime: priceLifetime,
+      );
     }
   }
 
@@ -98,10 +146,20 @@ class ProController extends Notifier<ProState> {
     }
   }
 
-  /// Start the real Google Play purchase (no-op until the store is ready).
-  Future<void> buy() async {
-    final product = _product;
-    if (product != null) await _svc.buy(product);
+  /// Start the real Google Play purchase for annual subscription.
+  Future<void> buyAnnual() async {
+    final product = state.annualProduct;
+    if (product != null) {
+      await _svc.buySubscription(product);
+    }
+  }
+
+  /// Start the real Google Play purchase for lifetime access.
+  Future<void> buyLifetime() async {
+    final product = state.lifetimeProduct;
+    if (product != null) {
+      await _svc.buyNonConsumable(product);
+    }
   }
 
   Future<void> restore() => _svc.restore();
