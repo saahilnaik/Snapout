@@ -23,6 +23,7 @@ class PurchaseService {
   Future<void> buyNonConsumable(ProductDetails product) =>
       _iap.buyNonConsumable(purchaseParam: PurchaseParam(productDetails: product));
 
+  // in_app_purchase uses buyNonConsumable for subscriptions on Android too.
   Future<void> buySubscription(ProductDetails product) =>
       _iap.buyNonConsumable(purchaseParam: PurchaseParam(productDetails: product));
 

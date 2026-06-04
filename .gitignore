@@ -41,6 +41,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Release signing — NEVER commit these
+android/upload-keystore.jks
+android/key.properties
+
 # local verification screenshot
 snapout_session1.png
 
