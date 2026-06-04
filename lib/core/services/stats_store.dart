@@ -39,6 +39,7 @@ class StatsSummary {
     required this.streakDays,
     required this.minutesSaved,
     required this.weekSkips,
+    required this.monthSkips,
   });
 
   final int todaySkipped;
@@ -50,6 +51,9 @@ class StatsSummary {
   /// Skips per weekday for the current week, Monday..Sunday (length 7).
   final List<int> weekSkips;
 
+  /// Skips per day for the last 30 days, index 0 = 29 days ago, 29 = today.
+  final List<int> monthSkips;
+
   static const empty = StatsSummary(
     todaySkipped: 0,
     todayOpened: 0,
@@ -57,6 +61,11 @@ class StatsSummary {
     streakDays: 0,
     minutesSaved: 0,
     weekSkips: [0, 0, 0, 0, 0, 0, 0],
+    monthSkips: [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ],
   );
 
   static const minutesPerSkip = 15;
@@ -91,8 +100,11 @@ class StatsStore {
     var totalSkips = 0;
     final skipDays = <DateTime>{};
     final week = List<int>.filled(7, 0);
+    final month = List<int>.filled(30, 0);
     // Monday of the current week.
     final monday = today.subtract(Duration(days: today.weekday - 1));
+    // Day 0 of the 30-day window.
+    final monthStart = today.subtract(const Duration(days: 29));
 
     for (final e in events) {
       final day = DateTime(e.timestamp.year, e.timestamp.month, e.timestamp.day);
@@ -111,6 +123,10 @@ class StatsStore {
       if (isSkip && !day.isBefore(monday)) {
         final idx = day.difference(monday).inDays;
         if (idx >= 0 && idx < 7) week[idx]++;
+      }
+      if (isSkip && !day.isBefore(monthStart)) {
+        final idx = day.difference(monthStart).inDays;
+        if (idx >= 0 && idx < 30) month[idx]++;
       }
     }
 
@@ -132,6 +148,7 @@ class StatsStore {
       streakDays: streak,
       minutesSaved: totalSkips * StatsSummary.minutesPerSkip,
       weekSkips: week,
+      monthSkips: month,
     );
   }
 }

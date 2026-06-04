@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,6 +150,8 @@ class _ProStatsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        _ThirtyDayChart(counts: stats.monthSkips),
+        const SizedBox(height: AppSpacing.lg),
         Center(
           child: RepaintBoundary(
             key: shareCardKey,
@@ -444,6 +447,112 @@ class _CardStat extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ThirtyDayChart extends StatelessWidget {
+  const _ThirtyDayChart({required this.counts});
+  final List<int> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final total = counts.fold(0, (s, c) => s + c);
+    final maxY = counts.fold<double>(1, (m, c) => c > m ? c.toDouble() : m);
+
+    final spots = [
+      for (var i = 0; i < counts.length; i++)
+        FlSpot(i.toDouble(), counts[i].toDouble()),
+    ];
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Last 30 days', style: t.titleMedium),
+              const Spacer(),
+              Text(
+                '$total skips',
+                style: t.bodyMedium?.copyWith(color: AppColors.accent),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          SizedBox(
+            height: 110,
+            child: LineChart(
+              LineChartData(
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: 29,
+                minY: 0,
+                maxY: maxY * 1.25,
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (_) => AppColors.surfaceHigh,
+                    getTooltipItems: (spots) => spots
+                        .map((s) => LineTooltipItem(
+                              '${s.y.toInt()}',
+                              TextStyle(
+                                color: AppColors.accent,
+                                fontFamily: 'Satoshi',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    curveSmoothness: 0.3,
+                    color: AppColors.accent,
+                    barWidth: 2,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      checkToShowDot: (spot, _) => spot.x == 29,
+                      getDotPainter: (_, _, _, _) => FlDotCirclePainter(
+                        radius: 4,
+                        color: AppColors.accent,
+                        strokeWidth: 2,
+                        strokeColor: AppColors.bg,
+                      ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.accent.withValues(alpha: 0.22),
+                          AppColors.accent.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('29d ago', style: t.bodyMedium?.copyWith(fontSize: 11, color: AppColors.textFaint)),
+              Text('today',   style: t.bodyMedium?.copyWith(fontSize: 11, color: AppColors.textFaint)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
