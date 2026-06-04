@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_tokens.dart';
 
@@ -37,35 +36,41 @@ class AppTheme {
       outline: AppColors.border,
     );
 
-    // TODO(fonts): swap to Clash Display / Satoshi (Fontshare) once bundled as
-    // local assets — google_fonts only serves the Google catalog. Space Grotesk
-    // is the closest modern, bold stand-in.
-    final textTheme = GoogleFonts.spaceGroteskTextTheme(base.textTheme)
-        .apply(bodyColor: AppColors.textPrimary, displayColor: AppColors.textPrimary)
+    // Type pairing (bundled Fontshare assets — see pubspec.yaml):
+    //   ClashDisplay → expressive headlines/display (weights 400/500/600/700)
+    //   Satoshi      → body + UI text (weights 400/500/700)
+    const display = 'ClashDisplay';
+    const body = 'Satoshi';
+    final textTheme = base.textTheme
+        .apply(
+          fontFamily: body,
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
+        )
         .copyWith(
-          displayLarge: GoogleFonts.spaceGrotesk(
-            fontSize: 56, fontWeight: FontWeight.w700, letterSpacing: -2,
-            color: AppColors.textPrimary, height: 1.0,
-          ),
-          displayMedium: GoogleFonts.spaceGrotesk(
-            fontSize: 44, fontWeight: FontWeight.w700, letterSpacing: -1.5,
-            color: AppColors.textPrimary, height: 1.05,
-          ),
-          headlineSmall: GoogleFonts.spaceGrotesk(
-            fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: -0.5,
-            color: AppColors.textPrimary,
-          ),
-          titleMedium: GoogleFonts.spaceGrotesk(
-            fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
-          ),
-          bodyLarge: GoogleFonts.spaceGrotesk(
-            fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textMuted, height: 1.5,
-          ),
-          bodyMedium: GoogleFonts.spaceGrotesk(
-            fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textMuted, height: 1.5,
-          ),
-          labelLarge: GoogleFonts.spaceGrotesk(
-            fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.2,
+          displayLarge: const TextStyle(
+            fontFamily: display, fontSize: 56, fontWeight: FontWeight.w700,
+            letterSpacing: -2, height: 1.0,
+          ).copyWith(color: AppColors.textPrimary),
+          displayMedium: const TextStyle(
+            fontFamily: display, fontSize: 44, fontWeight: FontWeight.w700,
+            letterSpacing: -1.5, height: 1.05,
+          ).copyWith(color: AppColors.textPrimary),
+          headlineSmall: const TextStyle(
+            fontFamily: display, fontSize: 26, fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+          ).copyWith(color: AppColors.textPrimary),
+          titleMedium: const TextStyle(
+            fontFamily: display, fontSize: 17, fontWeight: FontWeight.w600,
+          ).copyWith(color: AppColors.textPrimary),
+          bodyLarge: const TextStyle(
+            fontFamily: body, fontSize: 16, fontWeight: FontWeight.w400, height: 1.5,
+          ).copyWith(color: AppColors.textMuted),
+          bodyMedium: const TextStyle(
+            fontFamily: body, fontSize: 14, fontWeight: FontWeight.w400, height: 1.5,
+          ).copyWith(color: AppColors.textMuted),
+          labelLarge: const TextStyle(
+            fontFamily: body, fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.2,
           ),
         );
 
