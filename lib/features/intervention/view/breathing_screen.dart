@@ -90,7 +90,7 @@ class _BreathingScreenState extends ConsumerState<BreathingScreen>
       return;
     }
     await ref.read(statsProvider.notifier).logSkip(p.pkg);
-    if (mounted) context.pop();
+    if (mounted) context.go('/home');
     await ref.read(detectionServiceProvider).goHome();
   }
 
@@ -101,7 +101,7 @@ class _BreathingScreenState extends ConsumerState<BreathingScreen>
       return;
     }
     await ref.read(statsProvider.notifier).logOpen(p.pkg);
-    if (mounted) context.pop();
+    if (mounted) context.go('/home');
     await ref.read(detectionServiceProvider).moveToBack();
   }
 

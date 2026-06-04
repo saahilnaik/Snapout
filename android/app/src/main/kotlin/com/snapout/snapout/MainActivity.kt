@@ -58,8 +58,11 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        intent.getStringExtra(EXTRA_ROUTE)?.let { route ->
+        val route = intent.getStringExtra(EXTRA_ROUTE)
+        if (route != null) {
             if (methodChannel != null) deliverRoute(route) else pendingRoute = route
+        } else {
+            methodChannel?.invokeMethod("onLauncherLaunch", null)
         }
     }
 

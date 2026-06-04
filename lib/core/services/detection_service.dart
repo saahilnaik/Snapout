@@ -44,11 +44,32 @@ class DetectionService {
 
   // --- Launch routing (native -> Dart) ---
 
+  void Function(String)? _onLaunchRouteHandler;
+  void Function()? _onLauncherLaunchHandler;
+
   /// Warm path: native pushes a route while Dart is alive.
   void onLaunchRoute(void Function(String route) handler) {
+    _onLaunchRouteHandler = handler;
+    _setupMethodCallHandler();
+  }
+
+  /// Called when the app is resumed/opened from the launcher without a route.
+  void onLauncherLaunch(void Function() handler) {
+    _onLauncherLaunchHandler = handler;
+    _setupMethodCallHandler();
+  }
+
+  void _setupMethodCallHandler() {
     _method.setMethodCallHandler((call) async {
-      if (call.method == 'onLaunchRoute' && call.arguments is String) {
-        handler(call.arguments as String);
+      switch (call.method) {
+        case 'onLaunchRoute':
+          if (call.arguments is String) {
+            _onLaunchRouteHandler?.call(call.arguments as String);
+          }
+          break;
+        case 'onLauncherLaunch':
+          _onLauncherLaunchHandler?.call();
+          break;
       }
       return null;
     });

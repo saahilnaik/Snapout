@@ -43,6 +43,7 @@ class _SnapOutAppState extends ConsumerState<SnapOutApp> with WidgetsBindingObse
     final detection = ref.read(detectionServiceProvider);
     // Warm path: native pushes a route while we're alive.
     detection.onLaunchRoute(_go);
+    detection.onLauncherLaunch(_clearBreathingRoute);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Cold path: pull any route stashed before Dart was ready.
       final route = await detection.consumeLaunchRoute();
@@ -68,12 +69,24 @@ class _SnapOutAppState extends ConsumerState<SnapOutApp> with WidgetsBindingObse
     if (mounted) setState(() {});
   }
 
+  void _clearBreathingRoute() {
+    final current = appRouter.routerDelegate.currentConfiguration.uri.path;
+    if (current == '/breathing') {
+      appRouter.go('/home');
+    }
+  }
+
   void _go(String route) {
     // Don't stack a second breathing screen if one is already showing (repeated
     // triggers each carry a different ?pkg=, so compare path only).
     final current = appRouter.routerDelegate.currentConfiguration.uri.path;
     final target = Uri.parse(route).path;
-    if (current != target) appRouter.push(route);
+    if (current != target) {
+      appRouter.push(route);
+    } else {
+      // Replace the current route to reset breathing progress and update parameters.
+      appRouter.replace(route);
+    }
   }
 
   @override
