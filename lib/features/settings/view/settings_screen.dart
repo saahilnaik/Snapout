@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -65,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.apps_rounded,
                   title: 'Protected apps',
                   trailing: pro.isPro ? '${apps.length} apps' : '${apps.length} of 1',
-                  onTap: null,
+                  onTap: () => context.push('/onboarding'),
                 ),
                 (icon: Icons.air_rounded, title: 'Intervention', trailing: '3 breaths', onTap: null),
               ]),
@@ -443,8 +444,10 @@ class _SettingsRow extends StatelessWidget {
             Expanded(child: Text(row.title, style: t.titleMedium)),
             if (row.trailing.isNotEmpty)
               Text(row.trailing, style: t.bodyMedium?.copyWith(fontSize: 13)),
-            const SizedBox(width: AppSpacing.sm),
-            Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+            if (row.onTap != null) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+            ],
           ],
         ),
       ),

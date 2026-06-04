@@ -149,9 +149,11 @@ class _ProStatsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        RepaintBoundary(
-          key: shareCardKey,
-          child: _ShareCard(stats: stats),
+        Center(
+          child: RepaintBoundary(
+            key: shareCardKey,
+            child: _ShareCard(stats: stats),
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
         PrimaryButton(
@@ -164,64 +166,283 @@ class _ProStatsSection extends StatelessWidget {
   }
 }
 
-/// The branded card captured for sharing.
+// Hardcoded dark palette — card must look branded even in light-mode app.
+const _cardBg = Color(0xFF0A0B0D);
+const _cardAccent = Color(0xFFBFFF00);
+const _cardTextPrimary = Color(0xFFF4F5F7);
+const _cardTextMuted = Color(0xFF9BA1AC);
+const _cardTextFaint = Color(0xFF6B7280);
+const _cardBorder = Color(0xFF262A30);
+
+/// The branded card captured for sharing. Always dark regardless of app theme.
 class _ShareCard extends StatelessWidget {
   const _ShareCard({required this.stats});
   final StatsSummary stats;
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
     final hours = stats.minutesSaved ~/ 60;
+    final mins = stats.minutesSaved % 60;
+    final timeLabel = hours > 0
+        ? (mins > 0 ? '${hours}h ${mins}m' : '${hours}h')
+        : '${mins}m';
+
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      width: 320,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.accentSoft, AppColors.bg],
+          colors: [Color(0xFF0E100A), _cardBg],
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [SnapMark(size: 28), SizedBox(width: AppSpacing.sm), Wordmark(fontSize: 22)],
+        border: Border.all(color: _cardAccent.withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: _cardAccent.withValues(alpha: 0.18),
+            blurRadius: 48,
+            spreadRadius: -4,
+            offset: const Offset(0, 8),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          Text('I snapped out', style: t.bodyLarge),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _ShareStat(value: '${stats.totalSkips}', label: 'skips'),
-              const SizedBox(width: AppSpacing.xl),
-              _ShareStat(value: '${stats.streakDays}', label: 'day streak'),
-              const SizedBox(width: AppSpacing.xl),
-              _ShareStat(value: '${hours}h', label: 'saved'),
-            ],
+          BoxShadow(
+            color: _cardAccent.withValues(alpha: 0.06),
+            blurRadius: 100,
+            spreadRadius: 0,
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.lg - 1),
+        child: Stack(
+          children: [
+            // Decorative radial orb — top-right corner
+            Positioned(
+              top: -70,
+              right: -70,
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _cardAccent.withValues(alpha: 0.13),
+                      _cardAccent.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Top accent strip
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: Container(
+                height: 3,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0x00BFFF00),
+                      _cardAccent,
+                      Color(0x55BFFF00),
+                    ],
+                    stops: [0.0, 0.45, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl, AppSpacing.xl + 3, AppSpacing.xl, AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Branding row — full-width header
+                  Row(
+                    children: [
+                      const SnapMark(size: 24),
+                      const SizedBox(width: AppSpacing.sm),
+                      const Wordmark(fontSize: 18),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _cardAccent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: _cardAccent.withValues(alpha: 0.4)),
+                        ),
+                        child: const Text(
+                          'PRO',
+                          style: TextStyle(
+                            fontFamily: 'Satoshi',
+                            color: _cardAccent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Hero number
+                  Text(
+                    '${stats.totalSkips}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'ClashDisplay',
+                      fontSize: 88,
+                      fontWeight: FontWeight.w700,
+                      color: _cardAccent,
+                      height: 0.88,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const Text(
+                    'mindless opens blocked',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Satoshi',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _cardTextPrimary,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Week bars with day labels
+                  _MiniWeekBars(counts: stats.weekSkips),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Divider
+                  Container(height: 1, color: _cardBorder),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Supporting stats row — evenly spaced
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _CardStat(value: '${stats.streakDays}d', label: 'streak', centered: true),
+                      _CardStat(value: timeLabel, label: 'reclaimed', centered: true),
+                      _CardStat(
+                        value: '${stats.todaySkipped}',
+                        label: 'today',
+                        accentValue: true,
+                        centered: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Footer
+                  const Text(
+                    'snapout.app',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Satoshi',
+                      fontSize: 11,
+                      color: _cardTextFaint,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ShareStat extends StatelessWidget {
-  const _ShareStat({required this.value, required this.label});
-  final String value;
-  final String label;
+class _MiniWeekBars extends StatelessWidget {
+  const _MiniWeekBars({required this.counts});
+  final List<int> counts;
+  static const _labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final max = counts.fold<int>(1, (m, c) => c > m ? c : m);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(value, style: t.displayMedium?.copyWith(fontSize: 36, color: AppColors.accent)),
-        Text(label, style: t.bodyMedium?.copyWith(fontSize: 12)),
+        for (var i = 0; i < 7; i++) ...[
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 24,
+                height: 6 + 52.0 * (counts[i] / max),
+                decoration: BoxDecoration(
+                  color: counts[i] > 0 ? _cardAccent : _cardBorder,
+                  borderRadius: BorderRadius.circular(5),
+                  boxShadow: counts[i] > 0
+                      ? [
+                          BoxShadow(
+                            color: _cardAccent.withValues(alpha: 0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                _labels[i],
+                style: const TextStyle(
+                  fontFamily: 'Satoshi',
+                  fontSize: 10,
+                  color: _cardTextFaint,
+                ),
+              ),
+            ],
+          ),
+          if (i < 6) const SizedBox(width: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _CardStat extends StatelessWidget {
+  const _CardStat({
+    required this.value,
+    required this.label,
+    this.accentValue = false,
+    this.centered = false,
+  });
+  final String value;
+  final String label;
+  final bool accentValue;
+  final bool centered;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment:
+          centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'ClashDisplay',
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: accentValue ? _cardAccent : _cardTextPrimary,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Satoshi',
+            fontSize: 11,
+            color: _cardTextMuted,
+          ),
+        ),
       ],
     );
   }
